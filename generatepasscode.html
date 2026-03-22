@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Slot & Generate Passcode — SmartPrint GVP</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<style>
+body { background: #f0f4ff; }
+
+/* Step pills */
+.step-nav {
+  background: white; border-bottom: 1px solid #e2e8f0;
+  padding: 14px 0;
+}
+.step-nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 28px;
+  display: flex; align-items: center; gap: 0;
+}
+.step-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px; border-radius: 24px;
+  font-size: 13px; font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  color: var(--slate-light); transition: all .25s;
+}
+.step-pill.active { background: var(--blue-mid); color: white; box-shadow: 0 3px 12px rgba(30,79,194,0.3); }
+.step-pill.done { background: var(--green); color: white; }
+.step-connector { height: 2px; width: 36px; background: #e2e8f0; flex-shrink: 0; transition: background .25s; }
+.step-connector.done { background: var(--green); }
+
+/* Printer selector cards */
+.printer-option {
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: white;
+  position: relative;
+  overflow: hidden;
+}
+.printer-option::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--amber-dark), var(--amber));
+  opacity: 0; transition: opacity .2s;
+}
+.printer-option:hover { border-color: #bfdbfe; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,58,143,0.1); }
+.printer-option.selected { border-color: var(--blue-mid); background: #eff6ff; }
+.printer-option.selected::before { opacity: 1; }
+.printer-emoji { font-size: 28px; margin-bottom: 8px; }
+.printer-name-tag { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--navy); }
+.printer-queue-num { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--blue-mid); margin-top: 4px; }
+.printer-queue-label { font-size: 11px; color: var(--slate-light); }
+
+/* Printer grid 3-col */
+.printer-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+
+/* Success box */
+.success-box {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1.5px solid #6ee7b7;
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+}
+.success-circle {
+  width: 72px; height: 72px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+  box-shadow: 0 8px 28px rgba(16,185,129,0.35);
+  animation: fadeUp .5s ease both;
+}
+.success-h { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #065f46; margin-bottom: 6px; }
+.passcode-box {
+  font-family: 'Courier New', monospace;
+  font-size: 36px; font-weight: 900;
+  color: var(--blue-mid);
+  background: white;
+  border: 2px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 14px 28px;
+  display: inline-block;
+  letter-spacing: .2em;
+  margin: 12px 0;
+  box-shadow: 0 4px 18px rgba(26,58,143,0.12);
+}
+
+/* IoT Dashboard */
+.iot-wrap {
+  background: linear-gradient(160deg, var(--navy) 0%, #0d2060 100%);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 16px 48px rgba(8,15,36,0.4);
+}
+.iot-label {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .1em;
+  margin-bottom: 6px;
+}
+.iot-status {
+  background: #050e22;
+  border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px; color: #4ade80;
+  margin-bottom: 16px;
+}
+.iot-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink:0; animation: pulse 1.5s infinite; }
+
+.iot-printer-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 14px; text-align: center;
+}
+.iot-printer-emoji { font-size: 22px; margin-bottom: 6px; }
+.iot-printer-name { font-family:'Syne',sans-serif; font-size: 12px; font-weight: 700; color: rgba(255,255,255,.7); }
+.iot-printer-count { font-family:'Syne',sans-serif; font-size: 26px; font-weight: 800; color: #4ade80; }
+.iot-printer-sub { font-size: 11px; color: rgba(255,255,255,.4); }
+
+.passcode-input-row {
+  display: flex; gap: 10px;
+}
+.passcode-input-row input {
+  flex: 1; height: 46px;
+  padding: 0 14px;
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  color: white;
+  font-size: 16px; font-family: 'Courier New', monospace;
+  font-weight: 700; letter-spacing: .15em;
+  outline: none;
+  transition: border-color .2s;
+}
+.passcode-input-row input::placeholder { color: rgba(255,255,255,.35); }
+.passcode-input-row input:focus { border-color: var(--amber); }
+.passcode-input-row button {
+  height: 46px; padding: 0 18px;
+  background: var(--amber);
+  color: var(--navy);
+  border: none; border-radius: 12px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: all .2s; white-space: nowrap;
+}
+.passcode-input-row button:hover { background: var(--amber-dark); }
+
+/* Paper animation */
+.print-vis {
+  position: relative; height: 80px;
+  background: #050e22; border-radius: 12px;
+  overflow: hidden; margin-top: 14px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.print-paper {
+  width: 65%; height: 8px;
+  background: white; border-radius: 6px;
+  position: absolute; top: -60px; left: 17.5%;
+  transition: top 2s ease;
+}
+.print-printer {
+  position: absolute; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  background: #1e3a8a;
+  width: 70px; height: 40px; border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Bookings panel */
+.bookings-card { background: white; border-radius: 20px; border: 1px solid rgba(219,234,254,.8); box-shadow: 0 4px 20px rgba(8,15,36,.08); overflow: hidden; }
+.bookings-top {
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  padding: 18px 22px; display: flex; align-items: center; justify-content: space-between;
+}
+.bookings-top-title {
+  font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: white;
+  display: flex; align-items: center; gap: 9px;
+}
+.total-badge {
+  background: var(--amber); color: var(--navy);
+  font-size: 11px; font-weight: 800;
+  padding: 2px 9px; border-radius: 20px;
+  font-family: 'Syne', sans-serif;
+}
+.col-heads {
+  display: grid; grid-template-columns: 1.4fr 1fr 1fr;
+  padding: 10px 18px; background: #f8faff;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 10.5px; font-weight: 700;
+  color: var(--slate); text-transform: uppercase; letter-spacing: .07em;
+}
+.booking-row {
+  display: grid; grid-template-columns: 1.4fr 1fr 1fr;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: start;
+  transition: background .15s;
+  animation: slideDown .3s ease;
+}
+.booking-row:last-child { border-bottom: none; }
+.booking-row:hover { background: #f8faff; }
+.b-name { font-weight: 700; font-size: 13.5px; color: var(--navy); }
+.b-email { font-size: 11px; color: var(--slate-light); margin-top: 2px; }
+.b-time { font-size: 13px; font-weight: 600; color: var(--navy); }
+.b-date { font-size: 11px; color: var(--slate-light); margin-top: 2px; }
+.file-chip-sm {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: #f0f4ff; border: 1px solid #dbeafe;
+  border-radius: 6px; padding: 2px 7px;
+  font-size: 10.5px; color: var(--blue-mid);
+  margin: 2px 2px 0 0; font-weight: 600;
+}
+.empty-bookings { padding: 36px 22px; text-align: center; }
+
+/* Main two-col layout */
+.main-layout {
+  display: grid; grid-template-columns: 1fr 370px; gap: 24px; align-items: start;
+}
+@media(max-width:900px){ .main-layout{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-inner">
+    <a class="topbar-brand" href="dashboard.html">
+      <div class="topbar-logo">
+        <img src="gvpcdpgc.jpg" alt="GVP" onerror="this.parentElement.innerHTML='<div class=\'topbar-logo-fallback\'>GVP</div>'">
+      </div>
+      <div>
+        <div class="topbar-title">Book Slot &amp; Print</div>
+        <div class="topbar-sub">Step 3 of 3 · Passcode Authentication</div>
+      </div>
+    </a>
+    <div class="topbar-actions">
+      <a href="dashboard.html" class="btn btn-ghost btn-sm">
+        <i data-lucide="layout-dashboard" style="width:15px;height:15px;"></i>
+        Dashboard
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Step nav -->
+<div class="step-nav">
+  <div class="step-nav-inner">
+    <div class="step-pill done" id="pill1">✓ Book Slot</div>
+    <div class="step-connector done" id="conn1"></div>
+    <div class="step-pill done" id="pill2">✓ Printer</div>
+    <div class="step-connector" id="conn2"></div>
+    <div class="step-pill active" id="pill3">⚡ Passcode</div>
+    <div class="step-connector" id="conn3"></div>
+    <div class="step-pill" id="pill4">🖨️ Print</div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:24px;">
+  <div class="main-layout">
+
+    <!-- LEFT STEPS -->
+    <div>
+
+      <!-- STEP 1 -->
+      <div id="step1" class="card animate-up">
+        <div class="card-header">
+          <div class="card-header-icon"><i data-lucide="calendar-clock" style="width:22px;height:22px;color:var(--amber);"></i></div>
+          <div><h2>Book Your Time Slot</h2><p>Reserve when you want to print</p></div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="field-label">Your Full Name</label>
+            <div style="position:relative;">
+              <i data-lucide="user" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--slate-light);pointer-events:none;"></i>
+              <input id="username" class="field-input" style="padding-left:44px;" placeholder="e.g. Rongali Mounika">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Email Address</label>
+            <div style="position:relative;">
+              <i data-lucide="mail" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--slate-light);pointer-events:none;"></i>
+              <input id="userEmail" type="email" class="field-input" style="padding-left:44px;" placeholder="student@gvpcdpgc.edu.in">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Preferred Date &amp; Time</label>
+            <input id="bookingTime" type="datetime-local" class="field-input">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="goToStep(2)">
+            Next: Select Printer <i data-lucide="arrow-right" style="width:17px;height:17px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div id="step2" class="card hidden animate-up">
+        <div class="card-header">
+          <div class="card-header-icon"><i data-lucide="printer" style="width:22px;height:22px;color:var(--amber);"></i></div>
+          <div><h2>Select Printer</h2><p>Choose the printer location nearest to you</p></div>
+        </div>
+        <div class="card-body">
+          <label class="field-label" style="margin-bottom:12px;">Available Printers</label>
+          <div class="printer-grid-3" style="margin-bottom:20px;">
+            <div class="printer-option selected" id="opt-Auditorium" onclick="selectPrinter('Auditorium',this)">
+              <div class="printer-emoji">🏛️</div>
+              <div class="printer-name-tag">Auditorium</div>
+              <div class="printer-queue-num" id="qnum-Auditorium">0</div>
+              <div class="printer-queue-label">in queue</div>
+            </div>
+            <div class="printer-option" id="opt-Library" onclick="selectPrinter('Library',this)">
+              <div class="printer-emoji">📚</div>
+              <div class="printer-name-tag">Library</div>
+              <div class="printer-queue-num" id="qnum-Library">0</div>
+              <div class="printer-queue-label">in queue</div>
+            </div>
+            <div class="printer-option" id="opt-Lab" onclick="selectPrinter('Lab',this)">
+              <div class="printer-emoji">🖥️</div>
+              <div class="printer-name-tag">Lab</div>
+              <div class="printer-queue-num" id="qnum-Lab">0</div>
+              <div class="printer-queue-label">in queue</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Confirm Selection</label>
+            <select id="printerSelect" class="field-select" onchange="syncPrinterSelect(this.value)">
+              <option value="Auditorium">Printer 1 — Auditorium</option>
+              <option value="Library">Printer 2 — Library</option>
+              <option value="Lab">Printer 3 — Lab</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="sendPasscodeEmail()">
+            <i data-lucide="send" style="width:17px;height:17px;"></i>
+            Generate &amp; Send Passcode via Email
+          </button>
+          <button class="btn btn-ghost btn-sm btn-full" style="background:#f1f5f9;color:var(--slate);border:1.5px solid #e2e8f0;margin-top:10px;" onclick="goToStep(1)">
+            ← Back
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Confirmed -->
+      <div id="step3" class="card hidden animate-up">
+        <div class="card-header" style="background:linear-gradient(135deg,#064e3b,#059669);">
+          <div class="card-header-icon" style="background:rgba(255,255,255,0.15);">
+            <i data-lucide="check-circle-2" style="width:22px;height:22px;color:white;"></i>
+          </div>
+          <div><h2>Booking Confirmed!</h2><p>Your passcode has been sent</p></div>
+        </div>
+        <div class="card-body">
+          <div class="success-box">
+            <div class="success-circle">
+              <i data-lucide="mail-check" style="width:34px;height:34px;color:white;"></i>
+            </div>
+            <div class="success-h">Passcode Sent ✓</div>
+            <p style="font-size:13.5px;color:#047857;margin-bottom:6px;">Sent to: <strong id="confirmedEmail"></strong></p>
+            <div class="passcode-box" id="passcodeBox">••••••</div>
+            <p style="font-size:12px;color:#6ee7b7;margin-top:6px;">🔒 Keep this passcode private — use it at the printer terminal</p>
+          </div>
+          <button class="btn btn-amber btn-full" style="margin-bottom:10px;" onclick="goToStep(4)">
+            <i data-lucide="printer" style="width:17px;height:17px;"></i>
+            Go to Print Dashboard
+          </button>
+          <button class="btn" style="background:#f1f5f9;color:var(--slate);border:1.5px solid #e2e8f0;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="resetToStep1()">
+            <i data-lucide="plus" style="width:16px;height:16px;"></i>
+            Book Another Slot
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 4: IoT Dashboard -->
+      <div id="step4" class="hidden animate-up">
+        <div class="iot-wrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:white;">
+              🖨️ IoT Print Dashboard
+            </div>
+            <span style="font-size:11px;color:rgba(255,255,255,.4);">Real-time</span>
+          </div>
+
+          <!-- Status bar -->
+          <div class="iot-label">System Status</div>
+          <div class="iot-status" id="statusScreen">
+            <div class="iot-dot"></div>
+            STATUS: IDLE
+          </div>
+
+          <!-- Info row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;">
+              <div class="iot-label">Selected Printer</div>
+              <p id="selectedPrinterText" style="color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;"></p>
+            </div>
+            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;">
+              <div class="iot-label">Booked Slot</div>
+              <p id="selectedTimeText" style="color:white;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;"></p>
+            </div>
+          </div>
+
+          <!-- Files -->
+          <div class="iot-label">Files Queued</div>
+          <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:16px;">
+            <div id="printFileList"></div>
+          </div>
+
+          <!-- Queue counts -->
+          <div class="iot-label">Queue Status</div>
+          <div class="printer-grid-3" style="margin-bottom:16px;">
+            <div class="iot-printer-card">
+              <div class="iot-printer-emoji">🏛️</div>
+              <div class="iot-printer-name">Auditorium</div>
+              <div class="iot-printer-count" id="jobAuditorium">0</div>
+              <div class="iot-printer-sub">jobs</div>
+            </div>
+            <div class="iot-printer-card">
+              <div class="iot-printer-emoji">📚</div>
+              <div class="iot-printer-name">Library</div>
+              <div class="iot-printer-count" id="jobLibrary">0</div>
+              <div class="iot-printer-sub">jobs</div>
+            </div>
+            <div class="iot-printer-card">
+              <div class="iot-printer-emoji">🖥️</div>
+              <div class="iot-printer-name">Lab</div>
+              <div class="iot-printer-count" id="jobLab">0</div>
+              <div class="iot-printer-sub">jobs</div>
+            </div>
+          </div>
+
+          <!-- Time alert box -->
+          <div id="timeAlertBox" style="display:none;align-items:flex-start;gap:14px;padding:14px 16px;border-radius:14px;border:1.5px solid;margin-bottom:14px;animation:slideDown .3s ease;"></div>
+
+          <!-- Passcode entry -->
+          <div class="iot-label">Enter Passcode to Print</div>
+          <div class="passcode-input-row">
+            <input id="enteredPasscode" placeholder="••••••" maxlength="6">
+            <button onclick="enterPasscode()">
+              <i data-lucide="printer" style="width:16px;height:16px;"></i>
+              Print Now
+            </button>
+          </div>
+
+          <!-- Paper animation -->
+          <div class="print-vis">
+            <div id="printPaper" class="print-paper"></div>
+            <div class="print-printer">
+              <i data-lucide="printer" style="width:24px;height:24px;color:white;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /left -->
+
+    <!-- RIGHT: Live Bookings -->
+    <div class="animate-up-1">
+      <div class="bookings-card">
+        <div class="bookings-top">
+          <div class="bookings-top-title">
+            <i data-lucide="users" style="width:17px;height:17px;color:rgba(255,255,255,.7);"></i>
+            All Booked Slots
+            <span class="total-badge" id="totalBadge">0</span>
+          </div>
+          <button onclick="clearBookings()"
+            style="font-size:11px;color:rgba(255,255,255,.4);background:none;border:1px solid rgba(255,255,255,.15);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:'Syne',sans-serif;transition:all .2s;"
+            onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='none'">
+            Clear
+          </button>
+        </div>
+
+        <div class="col-heads">
+          <span>User</span>
+          <span>Time Slot</span>
+          <span>Files</span>
+        </div>
+
+        <div id="bookingsList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+(function(){ emailjs.init("WNKsaeu7XjvuUWBWc"); })();
+
+let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+let bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+let selectedPrinter = 'Auditorium';
+let generatedPasscode = null;
+let printerQueues = { Auditorium:[], Library:[], Lab:[] };
+let currentPrinting = { Auditorium:null, Library:null, Lab:null };
+
+/* ── STEP NAVIGATION ── */
+function updatePillNav(step) {
+  ['pill1','pill2','pill3','pill4'].forEach((id,i) => {
+    const p = document.getElementById(id);
+    if (!p) return;
+    p.classList.remove('active','done');
+    if (i+1 < step) p.classList.add('done');
+    else if (i+1 === step) p.classList.add('active');
+  });
+  ['conn1','conn2','conn3'].forEach((id,i) => {
+    const c = document.getElementById(id);
+    if (c) c.classList.toggle('done', i+1 < step);
+  });
+}
+
+function goToStep(step) {
+  if (step === 2) {
+    if (!document.getElementById('username').value.trim()) return alert('Please enter your name');
+    if (!document.getElementById('userEmail').value.trim()) return alert('Please enter your email');
+    if (!document.getElementById('bookingTime').value) return alert('Please select a time slot');
+    if (!uploadedFiles.length) return alert('No files found — please upload files first');
+    updateQueueNums();
+  }
+  ['step1','step2','step3','step4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById('step' + step);
+  if (target) target.classList.remove('hidden');
+  updatePillNav(step);
+  if (step === 4) loadIoTView();
+}
+
+/* ── PRINTER SELECTOR ── */
+function selectPrinter(name, el) {
+  selectedPrinter = name;
+  document.getElementById('printerSelect').value = name;
+  document.querySelectorAll('.printer-option').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function syncPrinterSelect(val) {
+  selectedPrinter = val;
+  document.querySelectorAll('.printer-option').forEach(c => c.classList.remove('selected'));
+  const opt = document.getElementById('opt-' + val);
+  if (opt) opt.classList.add('selected');
+}
+
+function updateQueueNums() {
+  ['Auditorium','Library','Lab'].forEach(p => {
+    const c = bookings.filter(b => b.printer === p).length;
+    const el = document.getElementById('qnum-' + p);
+    if (el) el.innerText = c;
+  });
+}
+
+/* ── SEND PASSCODE ── */
+async function sendPasscodeEmail() {
+  const name = document.getElementById('username').value.trim();
+  const email = document.getElementById('userEmail').value.trim();
+  const printer = document.getElementById('printerSelect').value;
+  const time = document.getElementById('bookingTime').value;
+
+  generatedPasscode = Math.floor(100000 + Math.random() * 900000);
+
+  const booking = {
+    id: Date.now(),
+    name, email, printer, time,
+    passcode: generatedPasscode,
+    files: uploadedFiles,
+    entered: false,
+    bookedAt: new Date().toISOString()
+  };
+
+  try {
+    await emailjs.send('service_02wzsbu', 'template_f0asueu', {
+      user_name: name, passcode: generatedPasscode, to_email: email
+    });
+  } catch(err) {
+    console.warn('Email send failed (continuing anyway):', err);
+  }
+
+  bookings.push(booking);
+  localStorage.setItem('bookings', JSON.stringify(bookings));
+
+  document.getElementById('confirmedEmail').innerText = email;
+  document.getElementById('passcodeBox').innerText = generatedPasscode;
+
+  renderBookings();
+  goToStep(3);
+}
+
+/* ── RENDER BOOKINGS TABLE ── */
+function renderBookings() {
+  const list = document.getElementById('bookingsList');
+  const badge = document.getElementById('totalBadge');
+  badge.innerText = bookings.length;
+
+  if (!bookings.length) {
+    list.innerHTML = `<div class="empty-bookings">
+      <i data-lucide="calendar-x" style="width:32px;height:32px;color:#93c5fd;display:block;margin:0 auto 12px;"></i>
+      <p style="font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">No bookings yet</p>
+      <p style="font-size:12px;color:var(--slate);">Completed bookings appear here in real time</p>
+    </div>`;
+    lucide.createIcons(); return;
+  }
+
+  list.innerHTML = bookings.map(b => {
+    const dt = new Date(b.time);
+    const timeStr = dt.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',hour12:true});
+    const dateStr = dt.toLocaleDateString('en-IN', {day:'2-digit',month:'short'});
+    const printerEmoji = {Auditorium:'🏛️',Library:'📚',Lab:'🖥️'}[b.printer] || '🖨️';
+    const filesHtml = (b.files||[]).map(f =>
+      `<span class="file-chip-sm">📄 ${f.name.length > 14 ? f.name.slice(0,13)+'…' : f.name}</span>`
+    ).join('') || '<span style="font-size:12px;color:var(--slate-light);">—</span>';
+
+    return `<div class="booking-row">
+      <div>
+        <div class="b-name">${b.name}</div>
+        <div class="b-email">${printerEmoji} ${b.printer}</div>
+      </div>
+      <div>
+        <div class="b-time">${timeStr}</div>
+        <div class="b-date">${dateStr}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;">${filesHtml}</div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+/* ── IoT VIEW ── */
+function loadIoTView() {
+  const last = bookings[bookings.length-1];
+  if (!last) return;
+  document.getElementById('selectedPrinterText').innerText = last.printer;
+  document.getElementById('selectedTimeText').innerText = new Date(last.time).toLocaleString('en-IN');
+  const fileList = document.getElementById('printFileList');
+  fileList.innerHTML = (last.files||[]).map(f =>
+    `<div style="display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.8);font-size:13px;margin-bottom:5px;">
+      <span style="color:#4ade80;">📄</span>${f.name}
+    </div>`
+  ).join('') || '<span style="color:rgba(255,255,255,.4);font-size:13px;">No files queued</span>';
+
+  printerQueues = {
+    Auditorium: bookings.filter(b => b.printer==='Auditorium'),
+    Library: bookings.filter(b => b.printer==='Library'),
+    Lab: bookings.filter(b => b.printer==='Lab')
+  };
+  updateIoTCounts();
+}
+
+function updateIoTCounts() {
+  document.getElementById('jobAuditorium').innerText = printerQueues.Auditorium.length;
+  document.getElementById('jobLibrary').innerText = printerQueues.Library.length;
+  document.getElementById('jobLab').innerText = printerQueues.Lab.length;
+}
+
+/* ── TIME WINDOW: slot time ±5 minutes ── */
+const WINDOW_BEFORE_MS = 0;          // can't print before the slot
+const WINDOW_AFTER_MS  = 5 * 60 * 1000;  // 5-minute grace after slot time
+
+function getTimeStatus(booking) {
+  const now       = Date.now();
+  const slotTime  = new Date(booking.time).getTime();
+  const windowEnd = slotTime + WINDOW_AFTER_MS;
+
+  if (now < slotTime)    return { ok: false, reason: 'early',  slotTime, windowEnd };
+  if (now > windowEnd)   return { ok: false, reason: 'expired', slotTime, windowEnd };
+  return { ok: true, slotTime, windowEnd };
+}
+
+function fmtTime(ms) {
+  return new Date(ms).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function showStatusMsg(html, color) {
+  /* color: 'red' | 'amber' | 'green' */
+  const dotColors = { red:'#f87171', amber:'#fbbf24', green:'#4ade80' };
+  const dot = `<div class="iot-dot" style="background:${dotColors[color]||dotColors.amber};animation:${color==='amber'?'pulse .6s infinite':'none'};"></div>`;
+  document.getElementById('statusScreen').innerHTML = dot + ' ' + html;
+}
+
+function showTimeAlert(reason, booking) {
+  const slotStr = fmtTime(new Date(booking.time).getTime());
+  const endStr  = fmtTime(new Date(booking.time).getTime() + WINDOW_AFTER_MS);
+  const nowStr  = fmtTime(Date.now());
+
+  const alertBox = document.getElementById('timeAlertBox');
+
+  if (reason === 'early') {
+    alertBox.style.display = 'flex';
+    alertBox.style.background = '#fff7ed';
+    alertBox.style.borderColor = '#fed7aa';
+    alertBox.innerHTML = `
+      <div style="font-size:26px;flex-shrink:0;">⏰</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#c2410c;margin-bottom:4px;">Too Early to Print</div>
+        <div style="font-size:13px;color:#9a3412;line-height:1.6;">
+          Your slot is booked for <strong>${slotStr}</strong>.<br>
+          Printing opens at <strong>${slotStr}</strong> and closes at <strong>${endStr}</strong>.<br>
+          Current time: <strong>${nowStr}</strong> — please come back at your slot time.
+        </div>
+      </div>`;
+    showStatusMsg('⏰ TOO EARLY — Slot opens at ' + slotStr, 'amber');
+
+  } else if (reason === 'expired') {
+    alertBox.style.display = 'flex';
+    alertBox.style.background = '#fef2f2';
+    alertBox.style.borderColor = '#fecaca';
+    alertBox.innerHTML = `
+      <div style="font-size:26px;flex-shrink:0;">❌</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#b91c1c;margin-bottom:4px;">Slot Expired</div>
+        <div style="font-size:13px;color:#991b1b;line-height:1.6;">
+          Your slot was <strong>${slotStr}–${endStr}</strong>.<br>
+          Current time: <strong>${nowStr}</strong> — the 5-minute window has passed.<br>
+          Please book a new slot to print your files.
+        </div>
+      </div>`;
+    showStatusMsg('❌ SLOT EXPIRED — Window was ' + slotStr + '–' + endStr, 'red');
+  }
+
+  /* auto-hide after 8 seconds */
+  clearTimeout(alertBox._timer);
+  alertBox._timer = setTimeout(() => { alertBox.style.display = 'none'; }, 8000);
+}
+
+function enterPasscode() {
+  const entered = document.getElementById('enteredPasscode').value.trim();
+
+  /* hide any previous alert */
+  document.getElementById('timeAlertBox').style.display = 'none';
+
+  if (!entered) {
+    showStatusMsg('⚠ ENTER YOUR 6-DIGIT PASSCODE', 'amber');
+    return;
+  }
+
+  const booking = bookings.find(b => String(b.passcode) === String(entered));
+
+  if (!booking) {
+    showStatusMsg('❌ INVALID PASSCODE — Check your email and try again', 'red');
+    document.getElementById('enteredPasscode').value = '';
+    return;
+  }
+
+  /* ── TIME WINDOW CHECK ── */
+  const ts = getTimeStatus(booking);
+
+  if (!ts.ok) {
+    showTimeAlert(ts.reason, booking);
+    document.getElementById('enteredPasscode').value = '';
+    return;
+  }
+
+  /* ── VALID: within window ── */
+  document.getElementById('timeAlertBox').style.display = 'none';
+  printerQueues[booking.printer].push(booking);
+  updateIoTCounts();
+  processQueue(booking.printer);
+  document.getElementById('enteredPasscode').value = '';
+}
+
+function processQueue(printer) {
+  if (currentPrinting[printer] || !printerQueues[printer].length) return;
+  currentPrinting[printer] = printerQueues[printer].shift();
+  updateIoTCounts();
+  const slotStr = fmtTime(new Date(currentPrinting[printer].time).getTime());
+  showStatusMsg(`PRINTING on ${printer.toUpperCase()} · Slot: ${slotStr}`, 'amber');
+  document.getElementById('printPaper').style.top = '12px';
+  setTimeout(() => {
+    showStatusMsg('✔ PRINT COMPLETED SUCCESSFULLY', 'green');
+    document.getElementById('printPaper').style.top = '-60px';
+    currentPrinting[printer] = null;
+    updateIoTCounts();
+    processQueue(printer);
+  }, 3000);
+}
+
+function clearBookings() {
+  if (!confirm('Clear all bookings? Cannot be undone.')) return;
+  bookings = []; localStorage.setItem('bookings','[]');
+  renderBookings();
+}
+
+function resetToStep1() {
+  document.getElementById('username').value = '';
+  document.getElementById('userEmail').value = '';
+  document.getElementById('bookingTime').value = '';
+  goToStep(1);
+}
+
+/* INIT */
+renderBookings();
+lucide.createIcons();
+</script>
+</body>
+</html>

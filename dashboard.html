@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — SmartPrint GVP</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+body { background: var(--off-white); }
+
+.page-bg {
+  background:
+    radial-gradient(ellipse 80% 40% at 10% 0%, rgba(26,58,143,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(245,158,11,0.04) 0%, transparent 60%),
+    #f0f4ff;
+  min-height: 100vh;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+@media(max-width:800px){ .stats-grid{ grid-template-columns:1fr 1fr; } }
+@media(max-width:480px){ .stats-grid{ grid-template-columns:1fr; } }
+
+/* Job row */
+.job-row-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 700;
+  font-family: 'Syne', sans-serif;
+}
+
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px; font-weight: 700; color: var(--navy);
+  display: flex; align-items: center; gap: 10px;
+}
+
+.empty-state {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px dashed #dbeafe;
+  padding: 60px 24px;
+  text-align: center;
+}
+.empty-icon {
+  width: 70px; height: 70px;
+  background: #f0f4ff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+}
+
+.job-filename {
+  font-weight: 600; font-size: 14px; color: var(--navy);
+}
+.job-id { font-size: 11px; color: var(--slate-light); margin-top: 2px; font-family: monospace; }
+.job-time { font-size: 12.5px; color: var(--slate); }
+</style>
+</head>
+<body>
+<div class="page-bg">
+
+  <!-- TOPBAR -->
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <a class="topbar-brand" href="index.html">
+        <div class="topbar-logo">
+          <img src="gvpcdpgc.jpg" alt="GVP"
+            onerror="this.parentElement.innerHTML='<div class=\'topbar-logo-fallback\'>GVP</div>'">
+        </div>
+        <div>
+          <div class="topbar-title">SmartPrint Dashboard</div>
+          <div class="topbar-sub">Gayatri Vidya Parishad · Batch C7</div>
+        </div>
+      </a>
+      <div class="topbar-actions">
+        <a href="upload.html" class="btn btn-amber btn-sm">
+          <i data-lucide="plus" style="width:15px;height:15px;"></i>
+          New Print Job
+        </a>
+        <a href="index.html" class="btn btn-ghost btn-sm" onclick="localStorage.removeItem('userLoggedIn')">
+          <i data-lucide="log-out" style="width:15px;height:15px;"></i>
+          Logout
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="section" style="padding-top:32px;">
+
+    <!-- Welcome row -->
+    <div style="margin-bottom:28px;" class="animate-up">
+      <h2 style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--navy);">
+        Good day! 👋
+      </h2>
+      <p style="color:var(--slate);font-size:14px;margin-top:4px;">
+        Here's an overview of your print jobs and activity.
+      </p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid animate-up-1">
+      <div class="stat-card blue">
+        <div class="stat-label">Total Jobs</div>
+        <div class="stat-value" id="totalJobs">0</div>
+        <div style="font-size:12px;color:var(--slate-light);margin-top:6px;">All time</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value" id="pendingJobs">0</div>
+        <div style="font-size:12px;color:var(--slate-light);margin-top:6px;">Awaiting print</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Printing</div>
+        <div class="stat-value" id="printingJobs">0</div>
+        <div style="font-size:12px;color:var(--slate-light);margin-top:6px;">In progress</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="completedJobs">0</div>
+        <div style="font-size:12px;color:var(--slate-light);margin-top:6px;">Successfully done</div>
+      </div>
+    </div>
+
+    <!-- JOB TABLE -->
+    <div class="animate-up-2">
+      <div class="section-header">
+        <div class="section-title">
+          <i data-lucide="clipboard-list" style="width:20px;height:20px;color:var(--blue-mid);"></i>
+          Print Jobs
+        </div>
+        <a href="upload.html" class="btn btn-primary btn-sm">
+          <i data-lucide="upload" style="width:14px;height:14px;"></i>
+          Upload Files
+        </a>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">
+          <i data-lucide="printer" style="width:32px;height:32px;color:#93c5fd;"></i>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:8px;">No print jobs yet</h3>
+        <p style="font-size:14px;color:var(--slate);margin-bottom:22px;">Upload your files and book a time slot to get started.</p>
+        <a href="upload.html" class="btn btn-primary">
+          <i data-lucide="plus" style="width:17px;height:17px;"></i>
+          Create First Print Job
+        </a>
+      </div>
+
+      <!-- Job table -->
+      <div id="jobTableWrap" class="card" style="display:none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="jobTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /section -->
+</div>
+
+<script>
+lucide.createIcons();
+
+function statusBadge(s) {
+  const map = {
+    pending:   '<span class="badge badge-pending">⏳ Pending</span>',
+    printing:  '<span class="badge badge-printing">🖨️ Printing</span>',
+    completed: '<span class="badge badge-completed">✓ Completed</span>',
+  };
+  return map[s] || `<span class="badge">${s}</span>`;
+}
+
+function loadDashboard() {
+  const jobs = JSON.parse(localStorage.getItem('printJobs') || '[]');
+  let pending = 0, printing = 0, completed = 0;
+  jobs.forEach(j => {
+    if (j.status === 'pending') pending++;
+    else if (j.status === 'printing') printing++;
+    else if (j.status === 'completed') completed++;
+  });
+
+  document.getElementById('totalJobs').innerText = jobs.length;
+  document.getElementById('pendingJobs').innerText = pending;
+  document.getElementById('printingJobs').innerText = printing;
+  document.getElementById('completedJobs').innerText = completed;
+
+  if (jobs.length > 0) {
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('jobTableWrap').style.display = 'block';
+    const tbody = document.getElementById('jobTableBody');
+    tbody.innerHTML = jobs.slice().reverse().map(j => `
+      <tr>
+        <td>
+          <div class="job-filename">${j.fileName}</div>
+          <div class="job-id">#${j.id}</div>
+        </td>
+        <td>${statusBadge(j.status)}</td>
+        <td class="job-time">${new Date(j.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}</td>
+        <td>
+          <button onclick="deleteJob(${j.id})" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px;" title="Remove">
+            <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+          </button>
+        </td>
+      </tr>`).join('');
+    lucide.createIcons();
+  } else {
+    document.getElementById('emptyState').style.display = '';
+    document.getElementById('jobTableWrap').style.display = 'none';
+  }
+}
+
+function deleteJob(id) {
+  if (!confirm('Remove this job?')) return;
+  let jobs = JSON.parse(localStorage.getItem('printJobs') || '[]');
+  jobs = jobs.filter(j => j.id !== id);
+  localStorage.setItem('printJobs', JSON.stringify(jobs));
+  loadDashboard();
+}
+
+loadDashboard();
+setInterval(loadDashboard, 3000);
+</script>
+</body>
+</html>

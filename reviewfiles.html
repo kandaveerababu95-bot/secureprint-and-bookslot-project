@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Files — SmartPrint GVP</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+body { background: #f0f4ff; }
+
+.file-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all .2s;
+  animation: slideDown .3s ease;
+}
+.file-card:hover { border-color: #bfdbfe; box-shadow: 0 4px 16px rgba(26,58,143,0.08); transform: translateY(-1px); }
+.file-thumb {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.file-thumb.doc { background: linear-gradient(135deg,#dbeafe,#bfdbfe); }
+.file-thumb.img { background: linear-gradient(135deg,#d1fae5,#a7f3d0); }
+.file-thumb.ppt { background: linear-gradient(135deg,#fee2e2,#fca5a5); }
+.file-thumb.pdf { background: linear-gradient(135deg,#fef3c7,#fde68a); }
+.file-name-big { font-weight: 700; font-size: 14.5px; color: var(--navy); }
+.file-meta { font-size: 12px; color: var(--slate-light); margin-top: 3px; }
+.file-del-btn {
+  margin-left:auto; background:none; border:1px solid #fee2e2;
+  cursor:pointer; color:#f87171; padding:8px; border-radius:10px;
+  display:flex; transition:all .15s;
+}
+.file-del-btn:hover { background:#fef2f2; color:var(--red); border-color:#fca5a5; }
+
+.empty-files {
+  text-align:center; padding:48px 24px;
+  background:#f8faff; border-radius:16px;
+  border:2px dashed #dbeafe;
+}
+
+.page-grid {
+  display: grid; grid-template-columns: 1fr 290px; gap: 24px; align-items: start;
+}
+@media(max-width:720px){ .page-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-inner">
+    <a class="topbar-brand" href="upload.html">
+      <div class="topbar-logo">
+        <img src="gvpcdpgc.jpg" alt="GVP" onerror="this.parentElement.innerHTML='<div class=\'topbar-logo-fallback\'>GVP</div>'">
+      </div>
+      <div>
+        <div class="topbar-title">Review Files</div>
+        <div class="topbar-sub">Step 2 of 3 · Add or remove files</div>
+      </div>
+    </a>
+    <div class="topbar-actions">
+      <a href="upload.html" class="btn btn-ghost btn-sm">
+        <i data-lucide="arrow-left" style="width:15px;height:15px;"></i>
+        Back
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Progress steps -->
+<div style="background:white;border-bottom:1px solid #e2e8f0;">
+  <div class="max-container" style="padding-top:16px;padding-bottom:16px;display:flex;align-items:center;gap:0;">
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);font-family:'Syne',sans-serif;">
+      <span style="width:26px;height:26px;background:var(--green);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">✓</span>
+      Upload Files
+    </div>
+    <div style="width:40px;height:2px;background:var(--green);margin:0 8px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--blue-mid);font-family:'Syne',sans-serif;">
+      <span style="width:26px;height:26px;background:var(--blue-mid);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">2</span>
+      Review
+    </div>
+    <div style="width:40px;height:2px;background:#e2e8f0;margin:0 8px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate-light);font-family:'Syne',sans-serif;">
+      <span style="width:26px;height:26px;background:#e2e8f0;color:var(--slate);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">3</span>
+      Book Slot
+    </div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:28px;">
+  <div class="page-grid">
+
+    <!-- LEFT MAIN -->
+    <div class="animate-up">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <i data-lucide="file-check" style="width:22px;height:22px;color:var(--amber);"></i>
+          </div>
+          <div>
+            <h2>Review Your Files</h2>
+            <p>Remove unwanted files or add more before proceeding</p>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- Add more -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div>
+              <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--navy);">
+                <span id="fileCountLabel">0</span> file(s) selected
+              </span>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('addInput').click()">
+              <i data-lucide="plus" style="width:15px;height:15px;"></i>
+              Add More Files
+            </button>
+            <input type="file" id="addInput" class="hidden"
+              accept=".txt,.pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp" multiple>
+          </div>
+
+          <!-- List -->
+          <div id="fileList" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+          <!-- Continue -->
+          <button id="continueBtn" class="btn btn-amber btn-full" style="margin-top:24px;" onclick="proceed()">
+            <i data-lucide="calendar" style="width:17px;height:17px;"></i>
+            Proceed to Book a Slot
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT INFO -->
+    <div class="animate-up-1">
+      <div class="card" style="padding:22px;margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <i data-lucide="info" style="width:18px;height:18px;color:var(--blue-mid);"></i>
+          Before You Continue
+        </div>
+        <ul style="font-size:13px;color:var(--slate);line-height:2;list-style:none;">
+          <li>✓ Only text &amp; image files accepted</li>
+          <li>✓ Max 50 MB per file</li>
+          <li>✓ Files saved until job completes</li>
+          <li>✓ You can add or remove files now</li>
+          <li>✗ Video &amp; audio files blocked</li>
+        </ul>
+      </div>
+
+      <div style="background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:18px;padding:20px;color:white;">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--amber);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;">Total Summary</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:13px;color:rgba(255,255,255,.6);">Files</span>
+          <span style="font-family:'Syne',sans-serif;font-weight:800;color:white;" id="summaryCount">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:13px;color:rgba(255,255,255,.6);">Total Size</span>
+          <span style="font-family:'Syne',sans-serif;font-weight:700;color:white;" id="summarySize">0.00 MB</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+const allowedExt = ['txt','pdf','doc','docx','ppt','pptx','jpg','jpeg','png','gif','webp'];
+let selectedFiles = JSON.parse(localStorage.getItem('selectedFiles') || '[]');
+
+document.getElementById('addInput').addEventListener('change', function() {
+  Array.from(this.files).forEach(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (!allowedExt.includes(ext)) { alert('Only text and image files allowed'); return; }
+    if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push({name:f.name,size:f.size});
+  });
+  localStorage.setItem('selectedFiles', JSON.stringify(selectedFiles));
+  render();
+});
+
+function getThumbClass(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'img';
+  if (['ppt','pptx'].includes(ext)) return 'ppt';
+  if (ext === 'pdf') return 'pdf';
+  return 'doc';
+}
+function getIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'image';
+  if (['ppt','pptx'].includes(ext)) return 'presentation';
+  if (ext === 'pdf') return 'file-type';
+  return 'file-text';
+}
+function getIconColor(name) {
+  const cls = getThumbClass(name);
+  return {img:'#16a34a',ppt:'#dc2626',pdf:'#d97706',doc:'var(--blue-mid)'}[cls];
+}
+
+function render() {
+  const list = document.getElementById('fileList');
+  document.getElementById('fileCountLabel').innerText = selectedFiles.length;
+  document.getElementById('summaryCount').innerText = selectedFiles.length;
+  const total = selectedFiles.reduce((a,f) => a+(f.size||0), 0);
+  document.getElementById('summarySize').innerText = (total/1048576).toFixed(2) + ' MB';
+
+  if (!selectedFiles.length) {
+    list.innerHTML = `<div class="empty-files">
+      <i data-lucide="folder-open" style="width:36px;height:36px;color:#93c5fd;display:block;margin:0 auto 12px;"></i>
+      <p style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px;">No files yet</p>
+      <p style="font-size:13px;color:var(--slate);">Click "Add More Files" to upload</p>
+    </div>`;
+    lucide.createIcons(); return;
+  }
+
+  list.innerHTML = selectedFiles.map((f,i) => `
+    <div class="file-card">
+      <div class="file-thumb ${getThumbClass(f.name)}">
+        <i data-lucide="${getIcon(f.name)}" style="width:22px;height:22px;color:${getIconColor(f.name)};"></i>
+      </div>
+      <div>
+        <div class="file-name-big">${f.name}</div>
+        <div class="file-meta">${f.size ? (f.size/1048576).toFixed(2)+' MB' : ''} · ${f.name.split('.').pop().toUpperCase()}</div>
+      </div>
+      <button class="file-del-btn" onclick="removeFile(${i})">
+        <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+      </button>
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i,1);
+  localStorage.setItem('selectedFiles', JSON.stringify(selectedFiles));
+  render();
+}
+
+function proceed() {
+  if (!selectedFiles.length) { alert('Please add at least one file'); return; }
+  let jobs = JSON.parse(localStorage.getItem('printJobs') || '[]');
+  selectedFiles.forEach((f,i) => {
+    jobs.push({id:Date.now()+i, fileName:f.name, status:'pending', createdAt:new Date().toISOString()});
+  });
+  localStorage.setItem('printJobs', JSON.stringify(jobs));
+  window.location.href = 'generatepasscode.html';
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Documents — SmartPrint GVP</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+body { background: #f0f4ff; }
+
+.drop-zone {
+  border: 2px dashed #bfdbfe;
+  border-radius: 18px;
+  padding: 52px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .25s;
+  background: #f8faff;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--blue-mid);
+  background: #eff6ff;
+  box-shadow: 0 0 0 4px rgba(30,79,194,0.08);
+}
+.drop-icon {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+  box-shadow: 0 8px 24px rgba(26,58,143,0.3);
+}
+.drop-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.drop-sub { font-size: 13.5px; color: var(--slate); margin-bottom: 18px; }
+.browse-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: white; border: 1.5px solid #dbeafe;
+  border-radius: 10px; padding: 8px 20px;
+  font-size: 13.5px; font-weight: 600; color: var(--blue-mid);
+  cursor: pointer; transition: all .2s;
+}
+.browse-btn:hover { background: #eff6ff; border-color: var(--blue-mid); }
+
+.format-pills {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 18px;
+}
+.format-pill {
+  background: white; border: 1px solid #e2e8f0;
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11.5px; font-weight: 600; color: var(--slate);
+}
+
+/* File preview list */
+.file-item {
+  display: flex; align-items: center; gap: 14px;
+  background: #f8faff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  transition: all .2s;
+  animation: slideDown .3s ease;
+}
+.file-item:hover { border-color: #bfdbfe; background: white; }
+.file-icon-wrap {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.file-icon-wrap.doc { background: #dbeafe; }
+.file-icon-wrap.img { background: #dcfce7; }
+.file-name { font-weight: 600; font-size: 14px; color: var(--navy); }
+.file-size { font-size: 12px; color: var(--slate-light); margin-top: 2px; }
+.file-del {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  color: var(--slate-light); padding: 6px; border-radius: 8px;
+  transition: all .15s; display: flex;
+}
+.file-del:hover { background: #fee2e2; color: var(--red); }
+
+.summary-card {
+  background: linear-gradient(145deg, var(--navy), var(--blue));
+  border-radius: 18px;
+  padding: 22px;
+  color: white;
+}
+.summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.summary-row:last-child { margin-bottom: 0; }
+.summary-label { font-size: 12px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+.summary-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--amber); }
+.summary-divider { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 16px 0; }
+
+.page-grid {
+  display: grid; grid-template-columns: 1fr 310px; gap: 24px; align-items: start;
+}
+@media(max-width:760px){ .page-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-inner">
+    <a class="topbar-brand" href="dashboard.html">
+      <div class="topbar-logo">
+        <img src="gvpcdpgc.jpg" alt="GVP" onerror="this.parentElement.innerHTML='<div class=\'topbar-logo-fallback\'>GVP</div>'">
+      </div>
+      <div>
+        <div class="topbar-title">Upload Documents</div>
+        <div class="topbar-sub">Step 1 of 3 · Select files to print</div>
+      </div>
+    </a>
+    <div class="topbar-actions">
+      <a href="dashboard.html" class="btn btn-ghost btn-sm">
+        <i data-lucide="arrow-left" style="width:15px;height:15px;"></i>
+        Dashboard
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Progress steps -->
+<div style="background:white;border-bottom:1px solid #e2e8f0;">
+  <div class="max-container" style="padding-top:16px;padding-bottom:16px;display:flex;align-items:center;gap:0;">
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--blue-mid);font-family:'Syne',sans-serif;">
+      <span style="width:26px;height:26px;background:var(--blue-mid);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">1</span>
+      Upload Files
+    </div>
+    <div style="width:40px;height:2px;background:#e2e8f0;margin:0 8px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate-light);font-family:'Syne',sans-serif;">
+      <span style="width:26px;height:26px;background:#e2e8f0;color:var(--slate);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">2</span>
+      Review
+    </div>
+    <div style="width:40px;height:2px;background:#e2e8f0;margin:0 8px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate-light);font-family:'Syne',sans-serif;">
+      <span style="width:26px;height:26px;background:#e2e8f0;color:var(--slate);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">3</span>
+      Book Slot
+    </div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:28px;">
+  <div class="page-grid">
+
+    <!-- LEFT -->
+    <div class="animate-up">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <i data-lucide="upload-cloud" style="width:22px;height:22px;color:var(--amber);"></i>
+          </div>
+          <div>
+            <h2>Select Files</h2>
+            <p>Text documents and images only · Max 50 MB each</p>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">
+              <i data-lucide="upload-cloud" style="width:32px;height:32px;color:white;"></i>
+            </div>
+            <div class="drop-title">Drop files here</div>
+            <div class="drop-sub">or browse from your device</div>
+            <div class="browse-btn" onclick="document.getElementById('fileInput').click()">
+              <i data-lucide="folder-open" style="width:16px;height:16px;"></i>
+              Browse Files
+            </div>
+            <input type="file" id="fileInput" class="hidden"
+              accept=".txt,.pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp"
+              multiple>
+            <div class="format-pills">
+              <span class="format-pill">PDF</span>
+              <span class="format-pill">DOC / DOCX</span>
+              <span class="format-pill">PPT / PPTX</span>
+              <span class="format-pill">TXT</span>
+              <span class="format-pill">JPG / PNG</span>
+              <span class="format-pill">GIF / WEBP</span>
+            </div>
+          </div>
+
+          <!-- File list -->
+          <div id="fileList" style="margin-top:20px;display:flex;flex-direction:column;gap:10px;"></div>
+
+          <!-- Action buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;">
+            <button id="bookSlotBtn" class="btn btn-primary" disabled
+              style="opacity:.4;cursor:not-allowed;" onclick="goBook()">
+              <i data-lucide="calendar-check" style="width:16px;height:16px;"></i>
+              Book Slot →
+            </button>
+            <button id="reviewBtn" class="btn" disabled
+              style="background:#f1f5f9;color:var(--slate);border:1.5px solid #e2e8f0;opacity:.4;cursor:not-allowed;" onclick="goReview()">
+              <i data-lucide="eye" style="width:16px;height:16px;"></i>
+              Review Files
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SUMMARY -->
+    <div class="animate-up-1">
+      <div class="summary-card" style="margin-bottom:16px;">
+        <div class="summary-row">
+          <div>
+            <div class="summary-label">Files Selected</div>
+            <div class="summary-val" id="fileCount">0</div>
+          </div>
+          <div style="width:48px;height:48px;background:rgba(245,158,11,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="files" style="width:24px;height:24px;color:var(--amber);"></i>
+          </div>
+        </div>
+        <hr class="summary-divider">
+        <div class="summary-row">
+          <div>
+            <div class="summary-label">Total Size</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:white;" id="totalSize">0.00 MB</div>
+          </div>
+          <div style="width:48px;height:48px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="database" style="width:22px;height:22px;color:rgba(255,255,255,0.6);"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <i data-lucide="shield-check" style="width:18px;height:18px;color:var(--green);flex-shrink:0;"></i>
+          <span style="font-size:13px;font-weight:700;color:var(--navy);">File Restrictions</span>
+        </div>
+        <div style="font-size:12.5px;color:var(--slate);line-height:1.7;">
+          ✓ Text documents (PDF, DOC, TXT)<br>
+          ✓ Image files (JPG, PNG, GIF)<br>
+          ✓ Presentations (PPT, PPTX)<br>
+          ✗ Video files — blocked<br>
+          ✗ Audio files — blocked<br>
+          ✗ Executables — blocked
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+const allowedExt = ['txt','pdf','doc','docx','ppt','pptx','jpg','jpeg','png','gif','webp'];
+const MAX_SIZE = 50 * 1024 * 1024;
+let selectedFiles = [];
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  processFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => processFiles(fileInput.files));
+
+function processFiles(files) {
+  for (let f of files) {
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (!allowedExt.includes(ext)) { alert('❌ Only TEXT and IMAGE files allowed.'); return; }
+    if (f.size > MAX_SIZE) { alert('❌ ' + f.name + ' exceeds 50 MB.'); return; }
+    if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f);
+  }
+  renderFiles(); updateSummary(); enableBtns();
+}
+
+const imgExts = ['jpg','jpeg','png','gif','webp'];
+function renderFiles() {
+  const list = document.getElementById('fileList');
+  if (!selectedFiles.length) { list.innerHTML = ''; return; }
+  list.innerHTML = selectedFiles.map((f, i) => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const isImg = imgExts.includes(ext);
+    return `<div class="file-item">
+      <div class="file-icon-wrap ${isImg ? 'img' : 'doc'}">
+        <i data-lucide="${isImg ? 'image' : 'file-text'}" style="width:20px;height:20px;color:${isImg ? '#16a34a' : 'var(--blue-mid)'};"></i>
+      </div>
+      <div>
+        <div class="file-name">${f.name}</div>
+        <div class="file-size">${(f.size/1048576).toFixed(2)} MB · ${ext.toUpperCase()}</div>
+      </div>
+      <button class="file-del" onclick="removeFile(${i})">
+        <i data-lucide="x" style="width:16px;height:16px;"></i>
+      </button>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function removeFile(i) { selectedFiles.splice(i,1); renderFiles(); updateSummary(); if(!selectedFiles.length) disableBtns(); }
+
+function updateSummary() {
+  document.getElementById('fileCount').innerText = selectedFiles.length;
+  const total = selectedFiles.reduce((a,f) => a+f.size, 0);
+  document.getElementById('totalSize').innerText = (total/1048576).toFixed(2) + ' MB';
+}
+
+function enableBtns() {
+  const b = document.getElementById('bookSlotBtn');
+  const r = document.getElementById('reviewBtn');
+  b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer';
+  r.disabled = false; r.style.opacity = '1'; r.style.cursor = 'pointer';
+  r.style.background = 'var(--navy)'; r.style.color = 'white'; r.style.border = 'none';
+}
+function disableBtns() {
+  const b = document.getElementById('bookSlotBtn');
+  const r = document.getElementById('reviewBtn');
+  b.disabled = true; b.style.opacity = '.4'; b.style.cursor = 'not-allowed';
+  r.disabled = true; r.style.opacity = '.4'; r.style.cursor = 'not-allowed';
+}
+
+function saveFiles() {
+  localStorage.setItem('uploadedFiles', JSON.stringify(selectedFiles.map(f => ({name:f.name,size:f.size,type:f.type}))));
+}
+function goBook() { if (!selectedFiles.length) return; saveFiles(); window.location.href = 'generatepasscode.html'; }
+function goReview() { if (!selectedFiles.length) return; saveFiles(); window.location.href = 'reviewfiles.html'; }
+</script>
+</body>
+</html>

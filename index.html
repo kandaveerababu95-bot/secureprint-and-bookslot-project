@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — SmartPrint GVP</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+body {
+  background: linear-gradient(160deg, var(--navy) 0%, #0d2060 55%, #0a1a40 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Subtle grid overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* Glow blobs */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+.blob-1 { width: 500px; height: 500px; background: rgba(26,58,143,0.35); top: -100px; left: -100px; }
+.blob-2 { width: 400px; height: 400px; background: rgba(245,158,11,0.12); bottom: -100px; right: -80px; }
+
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 480px 1fr;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+  padding: 28px;
+  gap: 0;
+}
+
+/* TOP HEADER */
+.page-header {
+  grid-column: 1 / 4;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 32px;
+  animation: fadeUp .6s ease both;
+}
+.page-logo {
+  width: 62px; height: 62px;
+  border-radius: 50%;
+  border: 2.5px solid var(--amber);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 5px rgba(245,158,11,0.12), 0 8px 24px rgba(8,15,36,0.5);
+}
+.page-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.header-info h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.4;
+  max-width: 600px;
+}
+.header-info p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* CENTER CARD */
+.login-col {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  width: 100%;
+  background: rgba(255,255,255,0.97);
+  border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(8,15,36,0.55), 0 4px 16px rgba(8,15,36,0.3);
+  overflow: hidden;
+  animation: fadeUp .6s .15s ease both;
+}
+
+.login-card-top {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+  padding: 28px 32px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.login-card-top::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: rgba(245,158,11,0.12);
+  border-radius: 50%;
+}
+.login-card-top::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: -40px;
+  width: 140px; height: 140px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 50%;
+}
+.login-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: white;
+  position: relative;
+}
+.login-subheading {
+  font-size: 13.5px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 4px;
+  position: relative;
+}
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245,158,11,0.2);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 12px;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.04em;
+  position: relative;
+}
+
+.login-card-body { padding: 28px 32px 32px; }
+
+.field-label-dark {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 7px;
+}
+.input-wrap { position: relative; }
+.input-wrap .field-input { padding-left: 44px; }
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--slate-light);
+  pointer-events: none;
+}
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--slate-light);
+  padding: 4px;
+  display: flex;
+}
+.eye-btn:hover { color: var(--navy); }
+
+.options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 20px;
+}
+.remember-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13.5px; color: var(--slate);
+  cursor: pointer;
+}
+.remember-label input[type=checkbox] {
+  width: 16px; height: 16px;
+  accent-color: var(--blue-mid);
+  cursor: pointer;
+}
+.forgot-link {
+  font-size: 13px;
+  color: var(--blue-mid);
+  text-decoration: none;
+  font-weight: 600;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.google-btn {
+  width: 100%;
+  height: 48px;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+}
+.google-btn:hover { background: #f8faff; border-color: #bfdbfe; }
+.google-logo { width: 20px; height: 20px; }
+
+.signup-prompt {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--slate);
+  margin-top: 22px;
+}
+.signup-prompt a { color: var(--blue-mid); font-weight: 700; text-decoration: none; }
+.signup-prompt a:hover { text-decoration: underline; }
+
+/* TEAM PANEL — left column */
+.left-col {
+  grid-column: 1;
+  padding-right: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 32px;
+  animation: fadeUp .6s .3s ease both;
+}
+
+/* FOOTER ROW */
+.page-footer {
+  grid-column: 1/4;
+  text-align: center;
+  padding-top: 28px;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.25);
+  animation: fadeIn .6s .4s ease both;
+}
+
+@media (max-width: 900px) {
+  .page-wrap { grid-template-columns: 1fr; padding: 20px 16px; }
+  .page-header { grid-column: 1; }
+  .login-col { grid-column: 1; }
+  .left-col { display: none; }
+  .page-footer { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-logo">
+      <img src="gvpcdpgc.jpg" alt="GVP"
+        onerror="this.parentElement.innerHTML='<div class=\'topbar-logo-fallback\' style=\'width:100%;height:100%;background:linear-gradient(135deg,#1e40af,#7c3aed);display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-weight:900;font-size:18px;color:white;\'>GVP</div>'">
+    </div>
+    <div class="header-info">
+      <h1>A Secure Mobile-Based Printing System with Multi-Printer Management, Dynamic Slot Booking, and Traffic-Aware Passcode Authentication</h1>
+      <p>Gayatri Vidya Parishad College for Degree and PG Courses (A) · 2026</p>
+    </div>
+  </div>
+
+  <!-- Team info left panel -->
+  <div class="left-col">
+    <div class="team-card">
+      <h3>⚡ Batch — C7</h3>
+      <div class="team-member">
+        <div class="team-avatar">RM</div>
+        <div>
+          <div class="team-name">Rongali Mounika</div>
+          <div class="team-roll">5221411204</div>
+        </div>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar">KV</div>
+        <div>
+          <div class="team-name">Kanda Veera Babu</div>
+          <div class="team-roll">5221411189</div>
+        </div>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar">TR</div>
+        <div>
+          <div class="team-name">Tatineni Rama Sai Siddartha</div>
+          <div class="team-roll">5221411209</div>
+        </div>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar">KK</div>
+        <div>
+          <div class="team-name">Korada Vivek Venkat Sai</div>
+          <div class="team-roll">5221411191</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login card -->
+  <div class="login-col">
+    <div class="login-card">
+      <div class="login-card-top">
+        <div class="login-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          SECURE ACCESS
+        </div>
+        <div class="login-heading">Welcome back</div>
+        <div class="login-subheading">Sign in to your SmartPrint account</div>
+      </div>
+
+      <div class="login-card-body">
+
+        <form id="loginForm">
+          <div class="field" style="margin-bottom:16px;">
+            <label class="field-label-dark">Email Address</label>
+            <div class="input-wrap">
+              <i data-lucide="mail" class="input-icon" style="width:17px;height:17px;"></i>
+              <input id="email" type="email" class="field-input" placeholder="you@example.com" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:4px;">
+            <label class="field-label-dark">Password</label>
+            <div class="input-wrap">
+              <i data-lucide="lock" class="input-icon" style="width:17px;height:17px;"></i>
+              <input id="password" type="password" class="field-input" placeholder="Enter your password" required>
+              <button type="button" class="eye-btn" onclick="togglePwd()">
+                <i id="eyeIcon" data-lucide="eye" style="width:17px;height:17px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="options-row">
+            <label class="remember-label">
+              <input type="checkbox"> Remember me
+            </label>
+            <a href="#" id="forgotLink" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" style="margin-bottom:0;">
+            <i data-lucide="log-in" style="width:17px;height:17px;"></i>
+            Sign In
+          </button>
+        </form>
+
+        <div class="divider"><span>or continue with</span></div>
+
+        <button class="google-btn" onclick="handleGoogleLogin()">
+          <svg class="google-logo" viewBox="0 0 48 48">
+            <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 13 24 13c3.1 0 5.9 1.1 8 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.2 4 9.5 8.4 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-8H6.2C9.4 35.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.1 35.1 44 29.9 44 24c0-1.3-.1-2.7-.4-4z"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <p class="signup-prompt">
+          Don't have an account? <a href="signup.html">Create one →</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">© 2026 SmartPrint · Gayatri Vidya Parishad College · All rights reserved</div>
+</div>
+
+<!-- Firebase + Google Identity -->
+<div id="g_id_onload"
+  data-client_id="301344499556-xxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com"
+  data-callback="handleGoogleLogin"
+  data-auto_prompt="false">
+</div>
+
+<script>
+lucide.createIcons();
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAGb989_gWkh0G63PGtY6GkKskbSL6lVvs",
+  authDomain: "smart-printer-app-79846.firebaseapp.com",
+  projectId: "smart-printer-app-79846",
+  storageBucket: "smart-printer-app-79846.firebasestorage.app",
+  messagingSenderId: "301344499556",
+  appId: "1:301344499556:web:7908c13b4757b38d21bc71"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+function togglePwd() {
+  const inp = document.getElementById('password');
+  const ico = document.getElementById('eyeIcon');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  ico.setAttribute('data-lucide', inp.type === 'password' ? 'eye' : 'eye-off');
+  lucide.createIcons();
+}
+
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    localStorage.setItem('userLoggedIn', 'true');
+    window.location.href = 'dashboard.html';
+  } catch(err) {
+    alert('❌ ' + err.message);
+  }
+});
+
+document.getElementById('forgotLink').addEventListener('click', async e => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  if (!email) return alert('⚠️ Enter your email first');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    alert('📩 Reset link sent! Check your inbox.');
+  } catch(err) {
+    alert('❌ ' + err.message);
+  }
+});
+
+function handleGoogleLogin(response) {
+  localStorage.setItem('userLoggedIn', 'true');
+  window.location.href = 'dashboard.html';
+}
+</script>
+</body>
+</html>

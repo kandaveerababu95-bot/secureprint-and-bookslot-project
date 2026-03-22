@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up — SmartPrint GVP</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+body {
+  background: linear-gradient(160deg, var(--navy) 0%, #0d2060 55%, #0a1a40 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+.blob { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+.blob-1 { width: 450px; height: 450px; background: rgba(26,58,143,0.3); top: -100px; right: -80px; }
+.blob-2 { width: 350px; height: 350px; background: rgba(245,158,11,0.1); bottom: -80px; left: -60px; }
+
+.page-wrap {
+  position: relative; z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 40px;
+}
+.page-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 28px;
+  animation: fadeUp .5s ease both;
+  width: 100%; max-width: 520px;
+}
+.page-logo {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  border: 2.5px solid var(--amber);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px rgba(245,158,11,0.12);
+}
+.page-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.header-info h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.4;
+}
+.header-info p { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px; text-transform: uppercase; letter-spacing: .08em; }
+
+.signup-card {
+  width: 100%; max-width: 520px;
+  background: rgba(255,255,255,0.97);
+  border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(8,15,36,0.55);
+  overflow: hidden;
+  animation: fadeUp .5s .12s ease both;
+}
+.signup-card-top {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+  padding: 26px 32px 22px;
+  position: relative;
+  overflow: hidden;
+}
+.signup-card-top::after {
+  content:''; position:absolute; top:-50px; right:-50px;
+  width:160px; height:160px;
+  background: rgba(245,158,11,0.1); border-radius:50%;
+}
+.signup-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px; font-weight: 800; color: white; position: relative;
+}
+.signup-subheading { font-size: 13px; color: rgba(255,255,255,0.55); margin-top:3px; position:relative; }
+
+.signup-body { padding: 26px 32px 32px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.input-wrap { position: relative; }
+.input-wrap .field-input { padding-left: 44px; }
+.input-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--slate-light); pointer-events: none;
+}
+
+.strength-bar {
+  height: 4px; border-radius: 4px;
+  background: #e2e8f0;
+  margin-top: 6px; overflow: hidden;
+}
+.strength-fill {
+  height: 100%; border-radius: 4px;
+  transition: width .3s, background .3s;
+  width: 0%;
+}
+
+.terms-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 18px 0 22px;
+  font-size: 13px; color: var(--slate);
+}
+.terms-row input[type=checkbox] {
+  width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;
+  accent-color: var(--blue-mid); cursor: pointer;
+}
+
+.signin-prompt {
+  text-align:center; font-size:13.5px; color:var(--slate); margin-top:20px;
+}
+.signin-prompt a { color:var(--blue-mid); font-weight:700; text-decoration:none; }
+.signin-prompt a:hover { text-decoration:underline; }
+
+@media (max-width:480px) { .two-col { grid-template-columns:1fr; } .signup-body { padding: 22px 20px 28px; } }
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="page-logo">
+      <img src="gvpcdpgc.jpg" alt="GVP"
+        onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:linear-gradient(135deg,#1e40af,#7c3aed);display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-weight:900;font-size:18px;color:white;\'>GVP</div>'">
+    </div>
+    <div class="header-info">
+      <h1>Smart Printer Booking System — GVP</h1>
+      <p>Gayatri Vidya Parishad College · Batch C7</p>
+    </div>
+  </div>
+
+  <div class="signup-card">
+    <div class="signup-card-top">
+      <div class="signup-heading">Create account</div>
+      <div class="signup-subheading">Join SmartPrint — secure printing for GVP students</div>
+    </div>
+
+    <div class="signup-body">
+      <form id="signupForm">
+
+        <div class="two-col">
+          <div class="field">
+            <label class="field-label">Username</label>
+            <div class="input-wrap">
+              <i data-lucide="user" class="input-icon" style="width:16px;height:16px;"></i>
+              <input id="username" type="text" class="field-input" placeholder="3–20 characters" required minlength="3" maxlength="20">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Phone Number</label>
+            <div class="input-wrap">
+              <i data-lucide="phone" class="input-icon" style="width:16px;height:16px;"></i>
+              <input id="phone" type="tel" class="field-input" placeholder="+91 XXXXX XXXXX" required inputmode="numeric">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Email Address</label>
+          <div class="input-wrap">
+            <i data-lucide="mail" class="input-icon" style="width:16px;height:16px;"></i>
+            <input id="email" type="email" class="field-input" placeholder="student@gvpcdpgc.edu.in" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Password</label>
+          <div class="input-wrap">
+            <i data-lucide="lock" class="input-icon" style="width:16px;height:16px;"></i>
+            <input id="password" type="password" class="field-input" placeholder="8+ chars, uppercase, number, symbol" required oninput="checkStrength(this.value)">
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <div style="font-size:11px;color:var(--slate-light);margin-top:4px;" id="strengthLabel">Enter a password</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Confirm Password</label>
+          <div class="input-wrap">
+            <i data-lucide="shield-check" class="input-icon" style="width:16px;height:16px;"></i>
+            <input id="confirmPassword" type="password" class="field-input" placeholder="Re-enter password" required>
+          </div>
+        </div>
+
+        <label class="terms-row">
+          <input type="checkbox" id="terms" required>
+          <span>I agree to the Terms of Use and acknowledge that my print activity may be monitored for security purposes.</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <i data-lucide="user-plus" style="width:17px;height:17px;"></i>
+          Create Account
+        </button>
+      </form>
+
+      <p class="signin-prompt">Already registered? <a href="index.html">Sign in →</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+function checkStrength(val) {
+  const fill = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[@$!%*?&]/.test(val)) score++;
+  const colors = ['#ef4444','#f59e0b','#3b82f6','#10b981'];
+  const labels = ['Too weak','Could be stronger','Almost there','Strong ✓'];
+  fill.style.width = (score * 25) + '%';
+  fill.style.background = colors[score - 1] || '#e2e8f0';
+  label.textContent = score === 0 ? 'Enter a password' : labels[score - 1];
+  label.style.color = colors[score - 1] || 'var(--slate-light)';
+}
+
+document.getElementById('signupForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirmPassword').value;
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('❌ Invalid email address.');
+  if (!/^(\+91[\-\s]?)?[6-9]\d{9}$/.test(phone)) return alert('❌ Enter a valid Indian phone number.');
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(password))
+    return alert('❌ Password must be 8+ chars with uppercase, number, and special character.');
+  if (password !== confirm) return alert('❌ Passwords do not match.');
+
+  alert('✅ Account created successfully!');
+  window.location.href = 'dashboard.html';
+});
+</script>
+</body>
+</html>
